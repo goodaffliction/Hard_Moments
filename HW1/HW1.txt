@@ -1,0 +1,174 @@
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <optional>
+#include <iomanip>
+#include <vector>
+#include <utility>
+#include <fstream>
+#include <algorithm>
+
+struct Person {
+    std::string surname;
+    std::string name;
+    std::optional <std::string> parent;
+
+    Person(std::string m_surname, std::string m_name, std::optional <std::string> m_parent): 
+        surname(m_surname), name(m_name), parent(m_parent) {};
+
+    friend bool operator < (const Person& t1, const Person& t2);
+    friend bool operator == (const Person& t1, const Person& t2);
+};
+
+inline std::ostream& operator << (std::ostream& out, const Person& person){
+    out << std::setw(13) << person.surname << std::setw(13) << person.name << std::setw(16) << person.parent.value_or("");
+    return out;
+}
+
+bool operator < (const Person& p1, const Person& p2) {
+    return tie(p1.name, p1.surname, p1.parent) <
+        tie(p2.name, p2.surname, p2.parent);
+}
+
+bool operator == (const Person& p1, const Person& p2) {
+    return tie(p1.name, p1.surname, p1.parent) ==
+        tie(p2.name, p2.surname, p2.parent);
+}
+
+struct PhoneNumber {
+    int CountryCode;
+    int CityCode;
+    std::string Number;
+    std::optional <std::string> addNumber;
+
+    PhoneNumber(int m_CountryCode, int m_CityCode, std::string m_Number, std::optional <std::string> m_addNumber):
+        CountryCode(m_CountryCode), CityCode(m_CityCode), Number(m_Number), addNumber (m_addNumber){};
+
+    friend std::ostream& operator<< (std::ostream& out, const PhoneNumber& point);
+    friend bool operator< (const PhoneNumber& t1, const PhoneNumber& t2);
+    friend bool operator== (const PhoneNumber& t1, const PhoneNumber& t2);
+};
+
+inline std::ostream& operator<< (std::ostream& out, const PhoneNumber& phonenumber) {
+    out << "+" << phonenumber.CountryCode << "(" << phonenumber.CityCode << ")" << phonenumber.Number << " " << phonenumber.addNumber.value_or("") << std::endl;
+    return out;
+}
+
+bool operator<(const PhoneNumber& p1, const PhoneNumber& p2) {
+    return tie(p1.CountryCode, p1.CityCode, p1.Number, p1.addNumber) <
+        tie(p2.CountryCode, p2.CityCode, p2.Number, p2.addNumber);
+}
+
+bool operator==(const PhoneNumber& p1, const PhoneNumber& p2) {
+    return tie(p1.CountryCode, p1.CityCode, p1.Number, p1.addNumber) ==
+        tie(p2.CountryCode, p2.CityCode, p2.Number, p2.addNumber);
+}
+
+class PhoneBook {
+private:
+    std::vector<std::pair<Person, PhoneNumber>> ManNumber;
+public:
+    PhoneBook(std::ifstream& inFile)    {
+        if (inFile.is_open())        {
+            std::string surname;
+            std::string name;
+            std::string parent;
+
+            int countryCode;
+            int cityCode;
+            std::string number;
+            std::string addNumber;
+
+            while (!inFile.eof()) {
+                inFile >> surname >> name >> parent >> countryCode >> cityCode >> number >> addNumber;
+                ManNumber.push_back(std::make_pair(Person(surname, name, parent), PhoneNumber(countryCode, cityCode, number, addNumber)));
+            }
+        }
+    }
+
+    struct sort_by_surname {
+        bool operator()(const std::pair<Person, PhoneNumber>& left, const std::pair<Person, PhoneNumber>& right) {
+            return left.first.surname < right.first.surname;
+        }
+    };
+
+    void SortByName() {
+        sort(ManNumber.begin(), ManNumber.end(), sort_by_surname());
+    };
+
+    struct sort_second {
+        bool operator()(const std::pair<Person, PhoneNumber>& left, const std::pair<Person, PhoneNumber>& right) {
+            return left.second < right.second;
+        }
+    };
+
+    void SortByPhone() {
+        sort(ManNumber.begin(), ManNumber.end(), sort_second());
+    };
+
+    struct find_surname {
+        bool operator()(const std::pair<Person, PhoneNumber>& v_person, const std::string v_surname) {
+            return v_person.first.surname == v_surname;
+        }
+    };
+
+    std::tuple<std::string, PhoneNumber> GetPhoneNumber(std::string v_surname) {
+
+        auto n = std::find(ManNumber.begin(), ManNumber.end(), find_surname());
+        int i = n - ManNumber.begin();
+        auto tuple1 = make_tuple(v_surname, ManNumber[i].second);
+
+        auto it = std::find_if(ManNumber.begin(), ManNumber.end(), [](const auto& item) {
+            return tuple1(" ", ManNumber[i].second);
+            }
+        );
+        
+        if (it != ManNumber.end()) {
+            return tuple1(" ", ManNumber[i].second);
+        }
+        else {
+            return tuple1("Not found", ManNumber[i].second);
+        }
+    }
+
+    friend std::ostream& operator << (std::ostream& out, const PhoneBook& phonebook);
+    friend bool operator== (const PhoneNumber& t1, const PhoneNumber& t2);
+};
+
+inline std::ostream& operator << (std::ostream& out, const PhoneBook& phonebook) {
+    for (int i = 0; i < phonebook.ManNumber.size(); i++)
+        out << phonebook.ManNumber[i].first << '\t' << phonebook.ManNumber[i].second;
+    return out;
+}
+
+int main()
+{
+    std::ifstream file("PhoneBook.txt");
+    PhoneBook book(file);
+    std::cout << book << std::endl;
+
+    std::cout << "------SortByPhone-------" << std::endl;
+    book.SortByPhone();
+    std::cout << book << std::endl;
+
+    std::cout << "------SortByName--------" << std::endl;
+    book.SortByName();
+    std::cout << book << std::endl;
+
+    std::cout << "-----GetPhoneNumber-----" << std::endl;
+    auto print_phone_number = [&book](const std::string& surname) {
+        std::cout << surname << "\t";
+        auto answer = book.GetPhoneNumber(surname);
+        if (std::get<0>(answer).empty())
+            std::cout << std::get<1>(answer);
+        else
+            std::cout << std::get<0>(answer);
+        std::cout << std::endl;
+    };
+
+    print_phone_number("Ivanov");
+    print_phone_number("Petrov");
+
+
+    return 0;
+}
