@@ -13,14 +13,14 @@ struct Person {
     std::string name;
     std::optional <std::string> parent;
 
-    Person(std::string m_surname, std::string m_name, std::optional <std::string> m_parent): 
+    Person(std::string m_surname, std::string m_name, std::optional <std::string> m_parent) :
         surname(m_surname), name(m_name), parent(m_parent) {};
 
     friend bool operator < (const Person& t1, const Person& t2);
     friend bool operator == (const Person& t1, const Person& t2);
 };
 
-inline std::ostream& operator << (std::ostream& out, const Person& person){
+inline std::ostream& operator << (std::ostream& out, const Person& person) {
     out << std::setw(13) << person.surname << std::setw(13) << person.name << std::setw(16) << person.parent.value_or("");
     return out;
 }
@@ -41,8 +41,8 @@ struct PhoneNumber {
     std::string Number;
     std::optional <std::string> addNumber;
 
-    PhoneNumber(int m_CountryCode, int m_CityCode, std::string m_Number, std::optional <std::string> m_addNumber):
-        CountryCode(m_CountryCode), CityCode(m_CityCode), Number(m_Number), addNumber (m_addNumber){};
+    PhoneNumber(int m_CountryCode, int m_CityCode, std::string m_Number, std::optional <std::string> m_addNumber) :
+        CountryCode(m_CountryCode), CityCode(m_CityCode), Number(m_Number), addNumber(m_addNumber) {};
 
     friend std::ostream& operator<< (std::ostream& out, const PhoneNumber& point);
     friend bool operator< (const PhoneNumber& t1, const PhoneNumber& t2);
@@ -68,8 +68,8 @@ class PhoneBook {
 private:
     std::vector<std::pair<Person, PhoneNumber>> ManNumber;
 public:
-    PhoneBook(std::ifstream& inFile)    {
-        if (inFile.is_open())        {
+    PhoneBook(std::ifstream& inFile) {
+        if (inFile.is_open()) {
             std::string surname;
             std::string name;
             std::string parent;
@@ -86,6 +86,7 @@ public:
         }
     }
 
+    //Sortirovka po familii
     struct sort_by_surname {
         bool operator()(const std::pair<Person, PhoneNumber>& left, const std::pair<Person, PhoneNumber>& right) {
             return left.first.surname < right.first.surname;
@@ -96,6 +97,7 @@ public:
         sort(ManNumber.begin(), ManNumber.end(), sort_by_surname());
     };
 
+    // Sortirovka po telefonu
     struct sort_second {
         bool operator()(const std::pair<Person, PhoneNumber>& left, const std::pair<Person, PhoneNumber>& right) {
             return left.second < right.second;
@@ -106,28 +108,53 @@ public:
         sort(ManNumber.begin(), ManNumber.end(), sort_second());
     };
 
-    struct find_surname {
-        bool operator()(const std::pair<Person, PhoneNumber>& v_person, const std::string v_surname) {
-            return v_person.first.surname == v_surname;
-        }
-    };
+    //Proverka cheloveka po familii
+    std::tuple<std::string, PhoneNumber> GetPhoneNumber(const std::string& v_surname) {
+        auto defaultElement{ PhoneNumber{0, 0, "0", {}} };
+        size_t count{ 0 };
+        std::pair<Person, PhoneNumber> retElement = std::make_pair(Person{ "", "", "" }, PhoneNumber{ 0,0,"", std::nullopt });
 
-    std::tuple<std::string, PhoneNumber> GetPhoneNumber(std::string v_surname) {
-
-        auto n = std::find(ManNumber.begin(), ManNumber.end(), find_surname());
-        int i = n - ManNumber.begin();
-        auto tuple1 = make_tuple(v_surname, ManNumber[i].second);
-
-        auto it = std::find_if(ManNumber.begin(), ManNumber.end(), [](const auto& item) {
-            return tuple1(" ", ManNumber[i].second);
+        for_each(ManNumber.begin(), ManNumber.end(),
+            [&v_surname, &count, &retElement](const std::pair<Person, PhoneNumber>& element) {
+                if (element.first.surname == v_surname) {
+                    count++;
+                    retElement = element;
+                }
             }
         );
-        
-        if (it != ManNumber.end()) {
-            return tuple1(" ", ManNumber[i].second);
+
+        if (count > 1)
+            return std::make_tuple("", retElement.second);
+        else if (count == 0)
+            return std::make_tuple("not found", defaultElement);
+
+        return std::make_tuple("found more than one", defaultElement);
+    }
+    //Zamena nomera
+    void ChangePhoneNumber(const Person& v_person, const int& countryCode, const int& cityCode, const std::string& number, const std::optional <std::string>& addNumber) {
+        size_t count{ 0 };
+        for_each(ManNumber.begin(), ManNumber.end(),
+            [&v_person, &countryCode, &cityCode, &number, &addNumber, &count](std::pair<Person, PhoneNumber>& element) {
+                if (element.first == v_person) {
+                    count++;
+                    element.second.CountryCode = countryCode;
+                    element.second.CityCode = cityCode;
+                    element.second.Number = number;
+                    element.second.addNumber = addNumber;
+                }
+            }
+        );
+        if (count > 1) {
+            std::cout << "found more than one man, error" << std::endl;
+            return;
         }
-        else {
-            return tuple1("Not found", ManNumber[i].second);
+        else if (count == 0) {
+            std::cout << "not found a man with this name" << std::endl;
+            return;
+        }
+        else if (count == 1) {
+            std::cout << "The number of man has changed" << std::endl;
+            return;
         }
     }
 
@@ -166,9 +193,15 @@ int main()
         std::cout << std::endl;
     };
 
-    print_phone_number("Ivanov");
+    print_phone_number("Solovev");
     print_phone_number("Petrov");
+    print_phone_number("Aleksandrov");
 
-
+    std::cout << "----ChangePhoneNumber----" << std::endl;
+    book.ChangePhoneNumber(Person{ "Kotov", "Vasilii", "Eliseevich" },7, 123, "15344458", std::nullopt);
+    book.ChangePhoneNumber(Person{ "Mironova", "Margarita", "Aleksandrovna" }, 16, 465, "9155448", "13");
+    book.ChangePhoneNumber(Person{ "Ivanov", "Daniil", "Kirillovich" }, 16, 465, "9155448", "13");
+    std::cout << book;
     return 0;
 }
+
