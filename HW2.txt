@@ -1,0 +1,182 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <algorithm>
+#include <Windows.h>
+#include "Timer.h"
+
+//first task
+template <typename T> 
+void swap(T*& a, T*& b)
+{
+    T* c = a;
+    a = b;
+    b = c;
+}
+//secont task
+void SortPointers(std::vector<int> myVector) {
+
+    srand(time(NULL));
+    int n = 10;
+
+    for (int i = 0; i < n; ++i) {
+        myVector.push_back(rand() % 10);
+    }
+
+    std::vector<int*> pVector;
+
+    for (int i = 0; i < n; ++i) {
+        std::cout << myVector[i] << " ";
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < n; ++i) {
+        std::cout << &myVector[i] << " ";
+    }
+
+    std::cout << std::endl;
+    for (int i = 0; i < n; ++i) {
+        int k = 0;
+        int var = i;
+        for (int j = 0; j < n; ++j) {
+            if (myVector[j] == var) {
+                pVector.push_back(&myVector[j]);
+            }
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        std::cout << pVector[i] << " ";
+    }
+}
+
+std::string Rus_cons = "аеёиоуэюяАЕЁИОУЭЮЯ";
+std::string Eng_cons = "aeuioAEUIO";
+std::string symbols = "!@#$%^&*(){}[]<>_+1234567890-=!\"\'№%?*:;|\\/`~";
+
+bool contain(const std::string& s, const char& a){
+    for (int j = 0; j < s.size(); j++)
+        if ( s[j] == a ) return true;
+    return false;
+}
+
+bool contain1(const std::string& s) {
+    for (int j = 0; j < s.size(); j++) {
+        int t = Eng_cons.find(s[j]);
+        if (t >= 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool contain2(const std::string& s) {
+    for (int j = 0; j < s.size(); ++j) {
+        for (int i = 0; i < Eng_cons.size(); ++i) {
+            if (s[j] == Eng_cons[i])
+                return true;
+        }
+    }
+    return false;
+}
+
+int main()
+{
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+
+    std::vector<std::string> WarAndPeace;
+    std::ifstream inFile("War_and_Peace.txt");
+    if (inFile.is_open()) {
+        std::string word;
+        while (!inFile.eof()) {
+            inFile >> word;
+            WarAndPeace.push_back(word);
+        }
+    }
+
+    //cycle for - for
+    int countOfCons1 = 0;
+    Timer timer1("Cycle for - for sort");
+    for (int i = 0; i < WarAndPeace.size(); ++i) {
+        for (int j = 0; j < WarAndPeace[i].size(); ++j) {
+            if (!contain(symbols, WarAndPeace[i][j])) {
+                if (contain(Eng_cons, WarAndPeace[i][j])) {
+                    countOfCons1++;
+                }
+            }
+        }
+    }
+    std::cout << countOfCons1 << std::endl;
+    timer1.print();
+
+    //cycle for - find
+    int countOfCons2 = 0;
+    Timer timer2("Cycle for - find sort");
+    for (int i = 0; i < WarAndPeace.size(); ++i) {
+        for (int j = 0; j < Eng_cons.size(); ++j) {
+            int t = WarAndPeace[i].find(Eng_cons[j]);
+            if (t >= 0) {
+                countOfCons2++;
+                //Ничего элегантнее не придумал, так как find находит только одну букву,
+                //то расчитывая, что больше трех одинаковых букв в слове не может быть:
+                t = WarAndPeace[i].find(Eng_cons[j], t + 1);
+                if (t >= 0 && t != std::string::npos) {
+                    countOfCons2++;
+                    t = WarAndPeace[i].find(Eng_cons[j], t + 1);
+                    if (t >= 0 && t != std::string::npos) {
+                        countOfCons2++;
+                    }
+                }
+            }
+        }
+    }
+    std::cout << std::endl;
+    std::cout << countOfCons2 << std::endl;
+    timer2.print();
+
+
+
+    //Возникают сложности с count_if и find. Find возвращает по сути "указатель" на место где находится символ который мы ищем
+    // соответсвенно он сделает это один раз в одном слове. Count_if возвращает правда ли ли находится буква в слове, что по сути 
+    // отвечает на этот вопрос: да, и плюсует 1, но опять же если в слове 2 гласные буквы то он в этом не очень помощник
+    // 
+    //Count_if and find
+    Timer timer3("Count_if and find");
+    int countOfCons3 = std::count_if(WarAndPeace.begin(), WarAndPeace.end(), contain1);
+
+    std::cout << std::endl;
+    std::cout << countOfCons3 << std::endl;
+    timer3.print();
+
+    //Count_if and for
+    Timer timer4("Count_if and for");
+    int countOfCons4 =  std::count_if(WarAndPeace.begin(), WarAndPeace.end(), contain2);
+
+    std::cout << std::endl;
+    std::cout << countOfCons4 << std::endl;
+    timer4.print();
+
+    //std::vector<int> mainVector;
+    //SortPointers(mainVector);
+
+    return 0;
+    // Мои результаты скорости
+    // Количество найденных гласных сильно разнятся(( 
+    //
+    /*  Cycle for - for sort:   9823.93 ms
+        Количество найденных гласных 1035345
+
+
+        
+        Cycle for - find sort : 970.21 ms
+        Количество найденных гласных 1034349
+
+       
+        Count_if and find : 157.067 ms
+         Количество найденных гласных 601323
+
+        
+        Count_if and for : 687.357 ms
+        Количество найденных гласных 601323*/
+}
