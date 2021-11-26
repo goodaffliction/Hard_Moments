@@ -1,0 +1,220 @@
+#include <iostream>
+#include <list>
+#include <vector>
+#include <typeinfo>
+
+//task 1----------------------------------------------------------------------
+void f_Average(std::list<double>* v_list) {
+    double sum = 0;
+    std::list<double>::iterator it;
+
+    for (it = v_list->begin(); it != v_list->end(); ++it) {
+        sum += *it;
+    }
+
+    v_list->push_back(sum / v_list->size());
+};
+
+//task 2----------------------------------------------------------------------
+class Matrix {
+private:
+    int matr_size, rows, columns, determ;
+    int** matr;
+public:
+    Matrix(int m_matr_size) :matr_size(m_matr_size){
+        matr = new int* [m_matr_size];
+        for (rows = 0; rows < m_matr_size; ++rows) {
+            matr[rows] = new int[m_matr_size];
+            for (columns = 0; columns < m_matr_size; ++columns) {
+                std::cout << "Matrix[" << rows + 1 << "][" << columns + 1 << "]= ";
+                matr[rows][columns] = (rand() % 10);
+                std::cout << matr[rows][columns] << std::endl;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    void PrintMatr(int m) {
+        matr_size = m;
+        int i, j;
+        for (i = 0; i < matr_size; i++) {
+            for (j = 0; j < matr_size; j++)
+                std::cout << matr[i][j] << "     ";
+            std::cout << std::endl << std::endl;
+        }
+    }
+
+    // Обрезание матрицы по элементу находящемуся на i-й строке и j-ом столбце
+    void GetMatr(int** p) {
+        int new_rows, new_columns, det_col;
+        int det_row = 0;
+        for (new_rows = 0; new_rows < matr_size - 1; ++new_rows) {
+            if (new_rows == rows) det_row = 1;
+            det_col = 0;
+            for (new_columns = 0; new_columns < matr_size - 1; ++new_columns) {
+                if (new_columns == 0) det_col = 1;
+                p[new_rows][new_columns] = matr[new_rows + det_row][new_columns + det_col];
+            }
+        }
+    }
+
+    int Determinant() {
+        int det, k, n;
+        int** p;
+        p = new int* [matr_size];
+        for (rows = 0; rows < matr_size; ++rows)
+            p[rows] = new int[matr_size];
+        columns = 0; det = 0;
+        k = 1;
+        n = matr_size - 1;
+        if (matr_size < 1) std::cout << "Определитель вычислить невозможно!";
+        if (matr_size == 1) {
+            det = matr[0][0];
+            return(det);
+        }
+        if (matr_size == 2) {
+            det = matr[0][0] * matr[1][1] - (matr[1][0] * matr[0][1]);
+            return(det);
+        }
+        if (matr_size > 2) {
+            for (int i = 0; i < matr_size; ++i) {
+                GetMatr(p);
+                std::cout << matr[i][columns] << std::endl;
+                PrintMatr(n);
+                det = det + k * matr[i][0] * Determinant();
+                k -= k;
+            }
+        }
+
+        for (int i = 0; i < rows; i++)
+            delete[] p[i];
+        delete[] p;
+
+        p = { nullptr };
+
+        return(det);
+    }
+
+    ~Matrix() {
+        for (int i = 0; i < rows; i++)
+            delete[] matr[i];
+        delete[] matr;
+
+        matr = { nullptr };
+
+        std::cout << "Matrix deleted" << std::endl;
+    };
+};
+
+
+//Task 3----------------------------------------------------------------------
+template<class T>
+class myIterator {
+private:
+    T* current;
+public:
+
+    myIterator(T* curr) :current(curr)    {
+    }
+
+    myIterator& operator =(const myIterator& other)    {
+        if (this != &other)        {
+            current = other.current;
+        }
+        return *this;
+    }
+
+    myIterator& operator ++()    {
+        ++current;
+        return *this;
+    }
+
+    T& operator *()    {
+        return *current;
+    }
+
+    T* operator ->()    {
+        return current;
+    }
+
+    bool operator ==(const myIterator& other)    {
+        return current == other.current;
+    }
+
+    bool operator !=(const myIterator& other)    {
+        return !(*this == other);
+    }
+};
+
+template<class T>
+class array {
+private:
+    T* arr_;
+    size_t sz_;
+public:
+    typedef myIterator<T> iterator;
+
+    array() : arr_(new T[0]), sz_(0)    {
+    }
+    array(size_t sz) : sz_(sz), arr_(new T[sz])    {
+        std::fill(arr_, arr_ + sz_, T());
+    }
+
+    ~array()    {
+        delete[] arr_;
+    }
+
+    myIterator<T> begin()    {
+        return myIterator<T>(arr_);
+    }
+
+    myIterator<T> end()    {
+        return myIterator<T>(arr_ + sz_);
+    }
+
+    T& operator [](size_t idx)    {
+        return arr_[idx];
+    }
+
+    const T& operator [](size_t idx) const    {
+        return arr_[idx];
+    }
+
+    size_t size() const    {
+        return sz_;
+    }
+};
+
+int main()
+{
+    srand(time(NULL));
+    system("chcp 1251");
+    /*std::list<double> myList;
+    std::list<double>::iterator it;
+    int n = 10;
+
+    for (int i = 0; i < n; ++i) {
+        myList.push_back(1 + rand() % 10);
+    }
+
+    f_Average(&myList);
+
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        std::cout << *it << " ";
+    }*/
+
+   /* Matrix Neo(3);
+    Neo.PrintMatr(3);
+    int determinant = Neo.Determinant();
+    std::cout << "Определитель = " << determinant << std::endl;*/
+
+    array<int> arr(5);
+    array<int>::iterator iter = arr.begin();
+    int i = 0;
+    for ( auto iter  : arr) {
+        iter = (++i);
+        std::cout << iter << " ";
+    }
+
+    return 0;
+}
