@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <ctime>
+
+
+//TASK 1
+// for any containers
+template <typename T, typename S>
+void insert_sorted_any(T* cont, S numb) {
+    T secondCont;
+    secondCont.push_back(numb);
+    T c(cont->size() + secondCont.size());
+    merge(cont->begin(), cont->end(), secondCont.begin(), secondCont.end(), c.begin());
+    cont->clear();
+    for (int i = 0; i < c.size(); ++i) {
+        cont->push_back(c[i]);
+    }
+}
+
+// for vector
+void insert_sorted(std::vector<int>* vec, int numb) {
+    std::vector<int> secondVec;
+    secondVec.push_back(numb);
+    std::vector<int> v(vec->size() + secondVec.size());
+    merge(vec->begin(), vec->end(), secondVec.begin(), secondVec.end(), v.begin());
+    vec->clear();
+    for (int i = 0; i < v.size(); ++i) {
+        vec->push_back(v[i]);
+    }
+}
+
+
+
+int main()
+{
+    srand(time(NULL));
+    /*int n = 10;
+    std::vector<int> myVec;
+    for (int i = 0; i < n; ++i) {
+        myVec.push_back(rand() % 50);
+    }
+    std::sort(myVec.begin(), myVec.end());
+    std::for_each(myVec.begin(), myVec.end(), [](int i) { std::cout << i << " "; });
+    std::cout << std::endl;
+
+    insert_sorted_any(&myVec, 11);
+    std::for_each(myVec.begin(), myVec.end(), [](int i) { std::cout << i << " "; });*/
+
+    //TASK 2
+    
+    std::vector<float> vec_float(100);
+    std::generate(vec_float.begin(), vec_float.end(), []() {return 0.01 * (rand() % 1000); });
+
+    for (float n : vec_float) {
+        std::cout << n << " ";
+    }
+    std::cout << std::endl;
+
+    std::vector<int> vec_int(100);
+
+    std::copy(vec_float.begin(), vec_float.end(), vec_int.begin());
+    for (int n : vec_int) {
+        std::cout << n << " ";
+    }
+    std::cout << std::endl;
+
+    int a;
+    std::transform(vec_float.begin(), vec_float.end(), vec_float.begin(), [&a](float i) { 
+        a = (int)i; 
+        i = (float)(i - a);
+        return i * i; 
+        });
+
+    for (float n : vec_float) {
+        std::cout << n << " ";
+    }
+    return 0;
+}
