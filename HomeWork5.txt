@@ -1,0 +1,87 @@
+#include <iostream>
+#include <list>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <set>
+#include <utility>
+
+
+//Task 1
+template<typename T>
+void PrintWord(T begin, T end){
+
+    for (T p1 = begin; p1 != end; ++p1)    {
+        T p2;
+        for (p2 = begin; p2 != p1; ++p2) {
+            if (*p1 == *p2)
+                 break;
+        }
+        if (p1 == p2)
+            std::cout << *p1 << ' ';
+    }
+    std::cout << std::endl;
+}
+
+int main()
+{
+    std::vector<std::string> vs1;
+    std::string num;
+    std::cout << "Write words (Enter to stop): ";
+    while (std::cin >> num && std::cin.get() != '\n')
+        vs1.push_back(num);
+
+    PrintWord(vs1.begin(), vs1.end());
+
+    //----------------------------------------  
+    std::vector<int> v1;
+    int i;
+    std::cout << "Write numbers (Enter to stop): ";
+    while (std::cin >> i && std::cin.get() != '\n')
+        v1.push_back(i);
+
+    PrintWord(v1.begin(), v1.end());
+
+    //--------------------------------------------
+    std::list<int> L1;
+    std::cout << "Write numbers (Enter to stop): ";
+    while (std::cin >> i && std::cin.get() != '\n')
+        L1.push_back(i);
+
+    PrintWord(L1.begin(), L1.end());
+
+    //Task 2
+    std::string myStr;
+    std::vector<std::string> myVector;
+    std::vector<std::string>::iterator it = myVector.begin();
+    std::set <std::vector<std::string>> mySet;
+
+    std::cout << "Write words (Enter to stop): ";
+    while (std::cin >> myStr && std::cin.get() != '\n')
+        myVector.push_back(myStr);
+
+    std::vector<std::string> vect;
+    std::vector<int> int_vect;
+    int sum = 0;
+
+    for (auto i = 0; i < myVector.size(); ++i) {
+        vect.push_back(myVector[i]);
+        for (int j = 0; j < myVector[i].size(); ++j) {
+            sum++;
+            if (myVector[i][j] == '.' || myVector[i][j] == '!' || myVector[i][j] == '?') {
+                mySet.insert(vect);
+                vect.clear();
+                int_vect.push_back(sum);
+                sum = 0;
+            }
+        }
+    }
+
+    for (auto const& vec : mySet)    {
+        for (auto const& val : vec)
+            std::cout << val << " ";
+        std::cout << std::endl;
+    }
+
+    return 0;
+}
