@@ -1,0 +1,132 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <algorithm>
+
+std::mutex m;
+
+//task 1
+//template <typename T>
+//class pcout {
+//private:
+//    T var;
+//public:
+//    pcout(T c_var) :var(c_var){
+//    }
+//
+//    void printOut() {
+//        m.lock();
+//        std::cout << var << std::endl;
+//        m.unlock();
+//    }
+//};
+
+//task 2
+
+int simpleNumber(int number) {
+
+    std::cout << std::this_thread::get_id() << std::endl;
+    std::lock_guard<std::mutex> lg(m);
+    std::cout << std::endl;
+
+    std::vector<int> myVector;
+
+    myVector.push_back(2);
+
+    for (int i = 3; i < number*number; i++) {
+        int sum = 2;
+        for (int j = 2; j < i; ++j) {
+            if (i % j == 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                std::cout << i << " % " << j << " = " << i % j << "  Neprostoe" << std::endl;
+                j = i;
+            }
+            sum++;
+        }
+        if (sum == i) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::cout << i << " % " << sum << " = " << i % sum << "  Prostoe" << std::endl;
+            myVector.push_back(i);
+        }
+        if (myVector.size() == number)
+            break;
+    }
+
+    for (int i = 0; i < myVector.size(); ++i) {
+        std::cout << myVector[i] << " ";
+
+    }
+
+    std::cout << std::endl;
+
+    return myVector[number - 1];
+}
+
+void owner(std::vector<int>& owner) {
+    while (!owner.empty()) {
+        owner.push_back(rand() % 10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        for (int i = 0; i < owner.size(); ++i) {
+            std::cout << owner[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void thief(std::vector<int>& thief) {
+    while (!thief.empty()) {
+        thief.erase(std::max_element(thief.begin(), thief.end()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        for (int i = 0; i < thief.size(); ++i) {
+            std::cout << thief[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+int main()
+{
+    std::cout << std::this_thread::get_id() << std::endl;
+
+    //for task 1
+    /*pcout<std::string> string_out("This is string");
+    pcout<int> int_out(5);
+    pcout<double> double_out(12.45);
+
+    std::thread th_str(&pcout<std::string>::printOut, &string_out);
+    std::thread th_int(&pcout<int>::printOut, &int_out);
+    std::thread th_double(&pcout<double>::printOut, &double_out);
+
+    th_str.join();
+    th_int.join();
+    th_double.join();*/
+
+    //For task 2
+    /*int i;
+    std::cout << "Please, enter I number: ";
+    std::cin >> i;
+    std::cout << std::endl;
+
+    int result;
+
+    std::thread th1([&]() {result = simpleNumber(i); });
+    th1.join();
+    std::cout << "The " << i << "'s simple number is " << result;*/
+
+    //task 3
+    std::vector<int> House;
+    srand(time(NULL));
+    for (int i = 0; i < 10; ++i) {
+        House.push_back(rand() % 10);
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    std::thread th1(owner, ref(House));
+    std::thread th2(thief, ref(House));
+
+    th1.join();
+    th2.join();
+
+    return 0;
+}
